@@ -26,7 +26,7 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch metricType {
+	switch models.MetricType(metricType) {
 	case models.Counter:
 		value, err := strconv.ParseInt(valueStr, 10, 64)
 		if err != nil {
