@@ -26,7 +26,6 @@ func NewDefaultSender(host string) (*HttpSender, error) {
 
 	if err != nil {
 		return nil, err
-
 	}
 
 	client := &http.Client{}

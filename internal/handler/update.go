@@ -37,7 +37,7 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	case models.Gauge:
 		value, err := strconv.ParseFloat(valueStr, 64)
 		if err != nil {
-			http.Error(w, "Invalid counter value", http.StatusBadRequest)
+			http.Error(w, "Invalid gauge value", http.StatusBadRequest)
 			return
 		}
 		fmt.Printf("Metric: %s Name: %s Value %v", metricType, name, value)
