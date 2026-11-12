@@ -1,3 +1,7 @@
 package main
 
-func main() {}
+import "github.com/Ceeler/metricssvc/internal/server"
+
+func main() {
+	server.RunServer()
+}
