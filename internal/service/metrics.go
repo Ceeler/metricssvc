@@ -16,25 +16,21 @@ func NewMetricService(repo repository.Metric) *Metric {
 }
 
 func (ms *Metric) GetMetric(metricType models.MetricType, name string) *models.Metrics {
-	if m, ok := ms.metricRepository.Get(metricType, name); ok {
-		return &m
-	} else {
-		return nil
-	}
+	return ms.metricRepository.Get(metricType, name)
 }
 
 func (ms *Metric) UpdateCounter(name string, value int64) {
-	metric, ok := ms.metricRepository.Get(models.Counter, name)
+	metric := ms.metricRepository.Get(models.Counter, name)
 
-	if !ok {
-		metric = models.Metrics{
+	if metric == nil {
+		metric = &models.Metrics{
 			ID:    name,
 			MType: string(models.Counter),
 		}
 	}
 
 	if metric.Delta == nil {
-		*metric.Delta = 0
+		metric.Delta = new(int64)
 	}
 
 	*metric.Delta = *metric.Delta + value
@@ -43,10 +39,10 @@ func (ms *Metric) UpdateCounter(name string, value int64) {
 }
 
 func (ms *Metric) UpdateGauge(name string, value float64) {
-	metric, ok := ms.metricRepository.Get(models.Gauge, name)
+	metric := ms.metricRepository.Get(models.Gauge, name)
 
-	if !ok {
-		metric = models.Metrics{
+	if metric == nil {
+		metric = &models.Metrics{
 			ID:    name,
 			MType: string(models.Gauge),
 		}
@@ -57,6 +53,6 @@ func (ms *Metric) UpdateGauge(name string, value float64) {
 	ms.metricRepository.Save(metric)
 }
 
-func (ms *Metric) GetAllMetrics() []models.Metrics {
+func (ms *Metric) GetAllMetrics() []*models.Metrics {
 	return ms.metricRepository.GetAll()
 }

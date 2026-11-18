@@ -17,38 +17,51 @@ func NewMemStorage() *MemStorage {
 
 var _ Metric = &MemStorage{}
 
-func (m *MemStorage) Save(metric models.Metrics) {
+// Получаем указатель, и кладем в мапу копию
+func (m *MemStorage) Save(metric *models.Metrics) {
 	metricType := models.MetricType(metric.MType)
 
-	if existMetric, ok := m.Get(metricType, metric.ID); !ok {
-		metrics, ok := m.metricsMap[metricType]
-		if !ok {
-			metrics = make(map[string]*models.Metrics)
-			m.metricsMap[metricType] = metrics
-		}
-		metrics[metric.ID] = &metric
-	} else {
-		existMetric.Delta = metric.Delta
-		existMetric.Value = metric.Value
-		existMetric.Hash = metric.Hash
+	metrics, ok := m.metricsMap[metricType]
+	if !ok {
+		metrics = make(map[string]*models.Metrics)
+		m.metricsMap[metricType] = metrics
 	}
+
+	metrics[metric.ID] = deepClone(metric)
 }
 
-func (m MemStorage) Get(metric models.MetricType, name string) (models.Metrics, bool) {
+// Возвращает ссылку на копию нужного элемента, или nil если элемент не найден
+func (m *MemStorage) Get(metric models.MetricType, name string) *models.Metrics {
 	metrics, ok := m.metricsMap[metric]
 	if ok {
-		m, ok := metrics[name]
-		return *m, ok
+		return deepClone(metrics[name])
 	}
-	return models.Metrics{}, false
+	return nil
 }
 
-func (m MemStorage) GetAll() []models.Metrics {
-	all := make([]models.Metrics, 0)
+// Возвращает ссылки на копии элеметов из хранилища
+func (m *MemStorage) GetAll() []*models.Metrics {
+	all := make([]*models.Metrics, 0)
 	for _, metrics := range m.metricsMap {
 		for _, metric := range metrics {
-			all = append(all, *metric)
+			all = append(all, deepClone(metric))
 		}
 	}
 	return all
+}
+
+func deepClone(original *models.Metrics) *models.Metrics {
+	if original == nil {
+		return nil
+	}
+	copy := *original
+	if original.Delta != nil {
+		d := *original.Delta
+		copy.Delta = &d
+	}
+	if original.Value != nil {
+		v := *original.Value
+		copy.Value = &v
+	}
+	return &copy
 }

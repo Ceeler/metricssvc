@@ -5,7 +5,7 @@ import (
 )
 
 type Metric interface {
-	GetAll() []models.Metrics
-	Get(metric models.MetricType, name string) (models.Metrics, bool)
-	Save(models.Metrics)
+	GetAll() []*models.Metrics
+	Get(metric models.MetricType, name string) *models.Metrics
+	Save(*models.Metrics)
 }
