@@ -17,7 +17,7 @@ func setupMetricRouter() (router *gin.Engine) {
 	router.RedirectTrailingSlash = false
 	router.LoadHTMLFiles("internal/templates/index.tmpl")
 
-	repo := repository.NewMemMetricRepository()
+	repo := repository.NewMemStorage()
 	svc := service.NewMetricService(repo)
 	h := handler.NewMetricHandler(svc)
 	router.POST("/update/:metric/:name/:value", h.UpdateHandler)

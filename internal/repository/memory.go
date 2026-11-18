@@ -4,28 +4,29 @@ import (
 	models "github.com/Ceeler/metricssvc/internal/model"
 )
 
-type MemMetricRepository struct {
+type MemStorage struct {
 	metricsMap map[models.MetricType]map[string]*models.Metrics
 }
 
-func NewMemMetricRepository() *MemMetricRepository {
+func NewMemStorage() *MemStorage {
 	metricsMap := make(map[models.MetricType]map[string]*models.Metrics)
-	return &MemMetricRepository{
+	return &MemStorage{
 		metricsMap: metricsMap,
 	}
 }
 
-var _ MetricRepository = &MemMetricRepository{}
+var _ Metric = &MemStorage{}
 
-func (m *MemMetricRepository) Save(metric *models.Metrics) {
+func (m *MemStorage) Save(metric models.Metrics) {
 	metricType := models.MetricType(metric.MType)
-	if existMetric := m.Get(metricType, metric.ID); existMetric == nil {
+
+	if existMetric, ok := m.Get(metricType, metric.ID); !ok {
 		metrics, ok := m.metricsMap[metricType]
 		if !ok {
 			metrics = make(map[string]*models.Metrics)
 			m.metricsMap[metricType] = metrics
 		}
-		metrics[metric.ID] = metric
+		metrics[metric.ID] = &metric
 	} else {
 		existMetric.Delta = metric.Delta
 		existMetric.Value = metric.Value
@@ -33,15 +34,16 @@ func (m *MemMetricRepository) Save(metric *models.Metrics) {
 	}
 }
 
-func (m MemMetricRepository) Get(metric models.MetricType, name string) *models.Metrics {
+func (m MemStorage) Get(metric models.MetricType, name string) (models.Metrics, bool) {
 	metrics, ok := m.metricsMap[metric]
 	if ok {
-		return metrics[name]
+		m, ok := metrics[name]
+		return *m, ok
 	}
-	return nil
+	return models.Metrics{}, false
 }
 
-func (m MemMetricRepository) GetAll() []models.Metrics {
+func (m MemStorage) GetAll() []models.Metrics {
 	all := make([]models.Metrics, 0)
 	for _, metrics := range m.metricsMap {
 		for _, metric := range metrics {

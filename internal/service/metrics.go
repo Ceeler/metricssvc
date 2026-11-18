@@ -1,64 +1,62 @@
 package service
 
 import (
-	"errors"
-
 	models "github.com/Ceeler/metricssvc/internal/model"
 	"github.com/Ceeler/metricssvc/internal/repository"
 )
 
-type MetricService struct {
-	metricRepository repository.MetricRepository
+type Metric struct {
+	metricRepository repository.Metric
 }
 
-func NewMetricService(repo repository.MetricRepository) *MetricService {
-	return &MetricService{
+func NewMetricService(repo repository.Metric) *Metric {
+	return &Metric{
 		metricRepository: repo,
 	}
 }
 
-func (ms *MetricService) GetMetric(metricType models.MetricType, name string) *models.Metrics {
-	return ms.metricRepository.Get(metricType, name)
+func (ms *Metric) GetMetric(metricType models.MetricType, name string) *models.Metrics {
+	if m, ok := ms.metricRepository.Get(metricType, name); ok {
+		return &m
+	} else {
+		return nil
+	}
 }
 
-func (ms *MetricService) UpdateMetric(metricType models.MetricType, name string, value any) error {
-	metric := ms.metricRepository.Get(metricType, name)
+func (ms *Metric) UpdateCounter(name string, value int64) {
+	metric, ok := ms.metricRepository.Get(models.Counter, name)
 
-	if metric == nil {
-		metric = &models.Metrics{
+	if !ok {
+		metric = models.Metrics{
 			ID:    name,
-			MType: string(metricType),
+			MType: string(models.Counter),
 		}
 	}
 
-	switch metricType {
-	case models.Counter:
-		var delta int64
-		if metric.Delta == nil {
-			delta = 0
-		} else {
-			delta = *metric.Delta
-		}
-		if v, ok := value.(int64); ok {
-			delta += v
-			metric.Delta = &delta
-		} else {
-			return errors.New("unsupported value of counter")
-		}
-	case models.Gauge:
-		if v, ok := value.(float64); ok {
-			metric.Value = &v
-		} else {
-			return errors.New("unsupported value of gauge")
-		}
-	default:
-		return errors.New("unsupported metric type")
+	if metric.Delta == nil {
+		*metric.Delta = 0
 	}
+
+	*metric.Delta = *metric.Delta + value
 
 	ms.metricRepository.Save(metric)
-	return nil
 }
 
-func (ms MetricService) GetAllMetrics() []models.Metrics {
+func (ms *Metric) UpdateGauge(name string, value float64) {
+	metric, ok := ms.metricRepository.Get(models.Gauge, name)
+
+	if !ok {
+		metric = models.Metrics{
+			ID:    name,
+			MType: string(models.Gauge),
+		}
+	}
+
+	metric.Value = &value
+
+	ms.metricRepository.Save(metric)
+}
+
+func (ms *Metric) GetAllMetrics() []models.Metrics {
 	return ms.metricRepository.GetAll()
 }

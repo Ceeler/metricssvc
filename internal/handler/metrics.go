@@ -10,12 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type MetricHandler struct {
-	service *service.MetricService
+type Metrics struct {
+	service *service.Metric
 }
 
-func NewMetricHandler(svc *service.MetricService) MetricHandler {
-	return MetricHandler{
+func NewMetricHandler(svc *service.Metric) Metrics {
+	return Metrics{
 		service: svc,
 	}
 }
@@ -25,14 +25,14 @@ type modelDTO struct {
 	Value string
 }
 
-func (h MetricHandler) GetAllHandler(c *gin.Context) {
+func (h Metrics) GetAllHandler(c *gin.Context) {
 	all := h.service.GetAllMetrics()
 	dtos := make([]modelDTO, 0, len(all))
 	for _, m := range all {
-		switch t := models.MetricType(m.MType); {
-		case t == models.Counter:
+		switch t := models.MetricType(m.MType); t {
+		case models.Counter:
 			dtos = append(dtos, modelDTO{Name: string(m.ID), Value: fmt.Sprint(*m.Delta)})
-		case t == models.Gauge:
+		case models.Gauge:
 			dtos = append(dtos, modelDTO{Name: string(m.ID), Value: fmt.Sprint(*m.Value)})
 		}
 	}
@@ -41,7 +41,7 @@ func (h MetricHandler) GetAllHandler(c *gin.Context) {
 	})
 }
 
-func (h MetricHandler) GetHandler(c *gin.Context) {
+func (h Metrics) GetHandler(c *gin.Context) {
 	metricType := models.MetricType(c.Param("metric"))
 	name := c.Param("name")
 	metric := h.service.GetMetric(metricType, name)
@@ -59,7 +59,7 @@ func (h MetricHandler) GetHandler(c *gin.Context) {
 	}
 }
 
-func (h MetricHandler) UpdateHandler(c *gin.Context) {
+func (h Metrics) UpdateHandler(c *gin.Context) {
 	metricType := c.Param("metric")
 	name := c.Param("name")
 	valueStr := c.Param("value")
@@ -74,21 +74,21 @@ func (h MetricHandler) UpdateHandler(c *gin.Context) {
 		return
 	}
 
-	switch t := models.MetricType(metricType); {
-	case t == models.Counter:
+	switch t := models.MetricType(metricType); t {
+	case models.Counter:
 		value, err := strconv.ParseInt(valueStr, 10, 64)
 		if err != nil {
 			c.String(http.StatusBadRequest, "Invalid counter value")
 			return
 		}
-		h.service.UpdateMetric(t, name, value)
-	case t == models.Gauge:
+		h.service.UpdateCounter(name, value)
+	case models.Gauge:
 		value, err := strconv.ParseFloat(valueStr, 64)
 		if err != nil {
 			c.String(http.StatusBadRequest, "Invalid gauge value")
 			return
 		}
-		h.service.UpdateMetric(t, name, value)
+		h.service.UpdateGauge(name, value)
 	default:
 		c.String(http.StatusBadRequest, "Metric type not supported")
 	}
