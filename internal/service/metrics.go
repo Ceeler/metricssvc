@@ -43,13 +43,13 @@ func (ms *MetricService) UpdateMetric(metricType models.MetricType, name string,
 			delta += v
 			metric.Delta = &delta
 		} else {
-			return errors.New("Unsupported value of counter")
+			return errors.New("unsupported value of counter")
 		}
 	case models.Gauge:
 		if v, ok := value.(float64); ok {
 			metric.Value = &v
 		} else {
-			return errors.New("Unsupported value of gauge")
+			return errors.New("unsupported value of gauge")
 		}
 	default:
 		return errors.New("unsupported metric type")
