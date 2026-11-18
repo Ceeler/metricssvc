@@ -15,14 +15,18 @@ type Agent struct {
 	Sender         MetricSender
 }
 
-func NewAgent() *Agent {
-	sender, _ := NewDefaultSender("http://localhost:8080/")
+func NewAgent(pollInterval, reportInterval int, address string) (*Agent, error) {
+	sender, err := NewDefaultSender(address)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Agent{
-		PollInterval:   2 * time.Second,
-		ReportInterval: 10 * time.Second,
+		PollInterval:   time.Duration(pollInterval) * time.Second,
+		ReportInterval: time.Duration(reportInterval) * time.Second,
 		Collector:      &Collector{},
 		Sender:         sender,
-	}
+	}, nil
 }
 
 func (a *Agent) Start() {

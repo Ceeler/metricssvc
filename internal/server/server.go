@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RunServer() {
+func RunServer(address string) {
 	router := setupMetricRouter()
-	router.Run("localhost:8080")
+	router.Run(address)
 }
 
 func setupMetricRouter() (router *gin.Engine) {
