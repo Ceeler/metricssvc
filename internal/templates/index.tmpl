@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <ul>
+            {{range .Metrics}}
+                <li>{{ .Name }} {{ .Value }}</li>
+            {{end}}
+        </ul>
+    </body>
+</html>

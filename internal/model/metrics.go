@@ -1,9 +1,24 @@
 package models
 
+type MetricType string
+
 const (
-	Counter = "counter"
-	Gauge   = "gauge"
+	Counter MetricType = "counter"
+	Gauge   MetricType = "gauge"
 )
+
+func (t MetricType) IsValid() bool {
+	switch t {
+	case Counter, Gauge:
+		return true
+	default:
+		return false
+	}
+}
+
+func (t MetricType) String() string {
+	return string(t)
+}
 
 // NOTE: Не усложняем пример, вводя иерархическую вложенность структур.
 // Органичиваясь плоской моделью.
