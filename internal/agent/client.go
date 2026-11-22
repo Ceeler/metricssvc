@@ -7,11 +7,11 @@ import (
 	"net/url"
 	"time"
 
-	models "github.com/Ceeler/metricssvc/internal/model"
+	"github.com/Ceeler/metricssvc/internal/model"
 )
 
 type MetricSender interface {
-	SendMetric(metric models.MetricType, name, value string) error
+	SendMetric(metric model.MetricType, name, value string) error
 }
 
 type HTTPSender struct {
@@ -37,18 +37,21 @@ func NewDefaultSender(host string) (*HTTPSender, error) {
 	}, nil
 }
 
-func (hs HTTPSender) SendMetric(metric models.MetricType, name, value string) error {
+func (hs HTTPSender) SendMetric(metric model.MetricType, name, value string) error {
 	metricURL := hs.URL.JoinPath("update", string(metric), name, value).String()
 	resp, err := hs.Client.Post(metricURL, "text/plain", nil)
 
-	if err == nil {
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
-
-		if resp.StatusCode >= 300 {
-			return fmt.Errorf("server return not success status: %d", resp.StatusCode)
-		}
+	if err != nil {
+		return err
 	}
 
-	return err
+	defer resp.Body.Close()
+
+	_, _ = io.Copy(io.Discard, resp.Body)
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("server return not success status: %d", resp.StatusCode)
+	}
+
+	return nil
 }

@@ -7,9 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RunServer(address string) {
+func Run(address string) {
 	router := setupMetricRouter()
-	router.Run(address)
+	if err := router.Run(address); err != nil {
+		panic(err)
+	}
 }
 
 func setupMetricRouter() (router *gin.Engine) {
@@ -18,8 +20,8 @@ func setupMetricRouter() (router *gin.Engine) {
 	router.LoadHTMLFiles("internal/templates/index.tmpl")
 
 	repo := repository.NewMemStorage()
-	svc := service.NewMetricService(repo)
-	h := handler.NewMetricHandler(svc)
+	svc := service.NewMetric(repo)
+	h := handler.NewMetrics(svc)
 	router.POST("/update/:metric/:name/:value", h.UpdateHandler)
 	router.GET("/value/:metric/:name", h.GetHandler)
 	router.GET("/", h.GetAllHandler)

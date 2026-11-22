@@ -1,13 +1,22 @@
 package main
 
-import "github.com/Ceeler/metricssvc/internal/agent"
+import (
+	"time"
+
+	"github.com/Ceeler/metricssvc/internal/agent"
+)
 
 func main() {
-	if err := parseFlags(); err != nil {
+	ops, err := parseOptions()
+
+	if err != nil {
 		panic(err)
 	}
 
-	a, err := agent.NewAgent(*PollInterval, *ReportInterval, *Address)
+	a, err := agent.New(time.Duration(ops.pollInterval)*time.Second,
+		time.Duration(ops.reportInterval)*time.Second,
+		ops.address)
+
 	if err != nil {
 		panic(err)
 	}
