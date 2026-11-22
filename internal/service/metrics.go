@@ -1,31 +1,36 @@
 package service
 
 import (
-	models "github.com/Ceeler/metricssvc/internal/model"
-	"github.com/Ceeler/metricssvc/internal/repository"
+	"github.com/Ceeler/metricssvc/internal/model"
 )
 
-type Metric struct {
-	metricRepository repository.Metric
+type MetricStore interface {
+	GetAll() []*model.Metrics
+	Get(metric model.MetricType, name string) *model.Metrics
+	Save(*model.Metrics)
 }
 
-func NewMetricService(repo repository.Metric) *Metric {
+type Metric struct {
+	metricRepository MetricStore
+}
+
+func NewMetric(repo MetricStore) *Metric {
 	return &Metric{
 		metricRepository: repo,
 	}
 }
 
-func (ms *Metric) GetMetric(metricType models.MetricType, name string) *models.Metrics {
+func (ms *Metric) GetMetric(metricType model.MetricType, name string) *model.Metrics {
 	return ms.metricRepository.Get(metricType, name)
 }
 
 func (ms *Metric) UpdateCounter(name string, value int64) {
-	metric := ms.metricRepository.Get(models.Counter, name)
+	metric := ms.metricRepository.Get(model.Counter, name)
 
 	if metric == nil {
-		metric = &models.Metrics{
+		metric = &model.Metrics{
 			ID:    name,
-			MType: string(models.Counter),
+			MType: string(model.Counter),
 		}
 	}
 
@@ -39,12 +44,12 @@ func (ms *Metric) UpdateCounter(name string, value int64) {
 }
 
 func (ms *Metric) UpdateGauge(name string, value float64) {
-	metric := ms.metricRepository.Get(models.Gauge, name)
+	metric := ms.metricRepository.Get(model.Gauge, name)
 
 	if metric == nil {
-		metric = &models.Metrics{
+		metric = &model.Metrics{
 			ID:    name,
-			MType: string(models.Gauge),
+			MType: string(model.Gauge),
 		}
 	}
 
@@ -53,6 +58,6 @@ func (ms *Metric) UpdateGauge(name string, value float64) {
 	ms.metricRepository.Save(metric)
 }
 
-func (ms *Metric) GetAllMetrics() []*models.Metrics {
+func (ms *Metric) GetAllMetrics() []*model.Metrics {
 	return ms.metricRepository.GetAll()
 }
