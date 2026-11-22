@@ -7,7 +7,9 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/Ceeler/metricssvc/internal/logger"
 	"github.com/Ceeler/metricssvc/internal/model"
+	"go.uber.org/zap"
 )
 
 type MetricSender interface {
@@ -38,6 +40,10 @@ func NewDefaultSender(host string) (*HTTPSender, error) {
 }
 
 func (hs HTTPSender) SendMetric(metric model.MetricType, name, value string) error {
+	logger.Get().Info("Send metric", zap.String("type", string(metric)),
+		zap.String("name", name),
+		zap.String("value", value))
+
 	metricURL := hs.URL.JoinPath("update", string(metric), name, value).String()
 	resp, err := hs.Client.Post(metricURL, "text/plain", nil)
 

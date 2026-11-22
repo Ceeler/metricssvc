@@ -5,7 +5,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Ceeler/metricssvc/internal/logger"
 	"github.com/Ceeler/metricssvc/internal/model"
+	"go.uber.org/zap"
 )
 
 type Agent struct {
@@ -65,6 +67,6 @@ func (a *Agent) Start() {
 
 func auditError(err error) {
 	if err != nil {
-		fmt.Printf("Error during sending metric to server %v", err)
+		logger.Get().Warn("Error during sending metric to server", zap.Error(err))
 	}
 }

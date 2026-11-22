@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -102,7 +103,8 @@ func TestServerUpdateHandler(t *testing.T) {
 		},
 	}
 
-	router := setupMetricRouter()
+	router := gin.Default()
+	setupMetricRouter(router)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
