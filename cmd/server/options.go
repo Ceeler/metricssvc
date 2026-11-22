@@ -15,6 +15,7 @@ func parseOptions() *options {
 	ops := &options{}
 
 	flag.StringVar(&ops.address, "a", _defaultAddress, "Address and port of server")
+	flag.Parse()
 
 	if address, ok := os.LookupEnv("ADDRESS"); ok {
 		ops.address = address
