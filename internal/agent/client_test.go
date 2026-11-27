@@ -7,26 +7,26 @@ import (
 	"io"
 	"net/http/httptest"
 
-	models "github.com/Ceeler/metricssvc/internal/model"
+	"github.com/Ceeler/metricssvc/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestHttpSender_WrongUrl(t *testing.T) {
+func TestHTTPSender_WrongURL(t *testing.T) {
 	_, err := NewDefaultSender("://myServer")
 	require.Error(t, err)
 }
 
-func TestHttpSender_SendWithNoServer(t *testing.T) {
+func TestHTTPSender_SendWithNoServer(t *testing.T) {
 	sender, err := NewDefaultSender("http://localhost:8080/")
 	require.NoError(t, err)
 
-	err = sender.SendMetric(models.Gauge, "Alloc", "123.5")
+	err = sender.SendMetric(model.Gauge, "Alloc", "123.5")
 
 	require.Error(t, err)
 }
 
-func TestHttpSender_SendMetric(t *testing.T) {
+func TestHTTPSender_SendMetric(t *testing.T) {
 	received := make(chan struct{}, 1)
 
 	server := httptest.NewServer(http.HandlerFunc(
@@ -48,14 +48,14 @@ func TestHttpSender_SendMetric(t *testing.T) {
 	sender, err := NewDefaultSender(server.URL)
 	require.NoError(t, err)
 
-	err = sender.SendMetric(models.Gauge, "Alloc", "123.5")
+	err = sender.SendMetric(model.Gauge, "Alloc", "123.5")
 
 	require.NoError(t, err)
 
 	require.Len(t, received, 1, "Server should receive metric")
 }
 
-func TestHttpSender_SendErrorMetric(t *testing.T) {
+func TestHTTPSender_SendErrorMetric(t *testing.T) {
 	received := make(chan struct{}, 1)
 
 	server := httptest.NewServer(http.HandlerFunc(
@@ -77,7 +77,7 @@ func TestHttpSender_SendErrorMetric(t *testing.T) {
 	sender, err := NewDefaultSender(server.URL)
 	require.NoError(t, err)
 
-	err = sender.SendMetric(models.Gauge, "Alloc", "123.5")
+	err = sender.SendMetric(model.Gauge, "Alloc", "123.5")
 
 	require.Error(t, err)
 

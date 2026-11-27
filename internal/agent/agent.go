@@ -5,7 +5,9 @@ import (
 	"sync"
 	"time"
 
-	models "github.com/Ceeler/metricssvc/internal/model"
+	"github.com/Ceeler/metricssvc/internal/logger"
+	"github.com/Ceeler/metricssvc/internal/model"
+	"go.uber.org/zap"
 )
 
 type Agent struct {
@@ -15,15 +17,15 @@ type Agent struct {
 	Sender         MetricSender
 }
 
-func NewAgent(pollInterval, reportInterval int, address string) (*Agent, error) {
+func New(pollInterval, reportInterval time.Duration, address string) (*Agent, error) {
 	sender, err := NewDefaultSender(address)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Agent{
-		PollInterval:   time.Duration(pollInterval) * time.Second,
-		ReportInterval: time.Duration(reportInterval) * time.Second,
+		PollInterval:   pollInterval,
+		ReportInterval: reportInterval,
 		Collector:      &Collector{},
 		Sender:         sender,
 	}, nil
@@ -51,12 +53,12 @@ func (a *Agent) Start() {
 		mux.Unlock()
 
 		for metric, value := range gauges {
-			err := a.Sender.SendMetric(models.Gauge, metric, fmt.Sprint(value))
+			err := a.Sender.SendMetric(model.Gauge, metric, fmt.Sprint(value))
 			auditError(err)
 		}
 
 		for metric, value := range counters {
-			err := a.Sender.SendMetric(models.Counter, metric, fmt.Sprint(value))
+			err := a.Sender.SendMetric(model.Counter, metric, fmt.Sprint(value))
 			auditError(err)
 		}
 
@@ -65,6 +67,6 @@ func (a *Agent) Start() {
 
 func auditError(err error) {
 	if err != nil {
-		fmt.Printf("Error during sending metric to server %v", err)
+		logger.Get().Warn("Error during sending metric to server", zap.Error(err))
 	}
 }
