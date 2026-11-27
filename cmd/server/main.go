@@ -1,8 +1,12 @@
 package main
 
-import "github.com/Ceeler/metricssvc/internal/server"
+import (
+	"github.com/Ceeler/metricssvc/internal/logger"
+	"github.com/Ceeler/metricssvc/internal/server"
+)
 
 func main() {
-	parseFlags()
-	server.RunServer(*Address)
+	logger.Initialize("info")
+	ops := parseOptions()
+	server.Run(ops.address)
 }

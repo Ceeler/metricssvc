@@ -1,17 +1,22 @@
 package agent
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
 
-	models "github.com/Ceeler/metricssvc/internal/model"
+	"github.com/Ceeler/metricssvc/internal/logger"
+	"github.com/Ceeler/metricssvc/internal/model"
+	"go.uber.org/zap"
 )
 
 type MetricSender interface {
-	SendMetric(metric models.MetricType, name, value string) error
+	SendMetric(metric model.MetricType, name, value string) error
+	SendMetricJSON(metric model.MetricType, name string, delta *int64, value *float64) error
 }
 
 type HTTPSender struct {
@@ -37,18 +42,56 @@ func NewDefaultSender(host string) (*HTTPSender, error) {
 	}, nil
 }
 
-func (hs HTTPSender) SendMetric(metric models.MetricType, name, value string) error {
+// Deprecated use SendMetricJson instead
+func (hs HTTPSender) SendMetric(metric model.MetricType, name, value string) error {
+	logger.Get().Info("Send metric", zap.String("type", string(metric)),
+		zap.String("name", name),
+		zap.String("value", value))
+
 	metricURL := hs.URL.JoinPath("update", string(metric), name, value).String()
 	resp, err := hs.Client.Post(metricURL, "text/plain", nil)
 
-	if err == nil {
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
-
-		if resp.StatusCode >= 300 {
-			return fmt.Errorf("server return not success status: %d", resp.StatusCode)
-		}
+	if err != nil {
+		return err
 	}
 
-	return err
+	defer resp.Body.Close()
+
+	_, _ = io.Copy(io.Discard, resp.Body)
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("server return not success status: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+func (hs HTTPSender) SendMetricJSON(metric model.MetricType, name string, delta *int64, value *float64) error {
+	metricURL := hs.URL.JoinPath("update").String()
+	dto := model.MetricsDto{
+		ID:    name,
+		MType: string(metric),
+		Value: value,
+		Delta: delta,
+	}
+	body, err := json.Marshal(dto)
+	if err != nil {
+		return err
+	}
+
+	resp, err := hs.Client.Post(metricURL, "application/json", bytes.NewBuffer(body))
+
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	_, _ = io.Copy(io.Discard, resp.Body)
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("server return not success status: %d", resp.StatusCode)
+	}
+
+	return nil
 }
