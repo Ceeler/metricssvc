@@ -37,4 +37,6 @@ func setupMetricRouter(router *gin.Engine) {
 	router.POST("/update/:metric/:name/:value", h.UpdateHandler)
 	router.GET("/value/:metric/:name", h.GetHandler)
 	router.GET("/", h.GetAllHandler)
+	router.POST("/update", h.UpdateJsonHandler)
+	router.GET("/value", h.GetAllJsonHandler)
 }

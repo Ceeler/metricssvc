@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -53,12 +52,12 @@ func (a *Agent) Start() {
 		mux.Unlock()
 
 		for metric, value := range gauges {
-			err := a.Sender.SendMetric(model.Gauge, metric, fmt.Sprint(value))
+			err := a.Sender.SendMetricJSON(model.Gauge, metric, nil, &value)
 			auditError(err)
 		}
 
 		for metric, value := range counters {
-			err := a.Sender.SendMetric(model.Counter, metric, fmt.Sprint(value))
+			err := a.Sender.SendMetricJSON(model.Counter, metric, &value, nil)
 			auditError(err)
 		}
 

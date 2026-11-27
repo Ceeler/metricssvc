@@ -1,13 +1,16 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/Ceeler/metricssvc/internal/logger"
 	"github.com/Ceeler/metricssvc/internal/model"
 	"github.com/Ceeler/metricssvc/internal/service"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type Metrics struct {
@@ -92,5 +95,55 @@ func (h Metrics) UpdateHandler(c *gin.Context) {
 		h.service.UpdateGauge(name, value)
 	default:
 		c.String(http.StatusBadRequest, "Metric type not supported")
+	}
+}
+
+func (h Metrics) UpdateJsonHandler(c *gin.Context) {
+	if c.ContentType() != gin.MIMEJSON {
+		c.String(http.StatusUnsupportedMediaType, "Accepting json type")
+	}
+	var dto model.MetricsDto
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&dto); err != nil {
+		logger.Get().Info("Error during decoding body", zap.Error(err))
+		c.String(http.StatusBadRequest, "error decoding json body")
+		return
+	}
+
+	switch t := model.MetricType(dto.MType); t {
+	case model.Counter:
+		if dto.Delta == nil {
+			c.String(http.StatusBadRequest, "Delta null for Counter")
+			return
+		}
+		h.service.UpdateCounter(dto.ID, *dto.Delta)
+	case model.Gauge:
+		if dto.Value == nil {
+			c.String(http.StatusBadRequest, "Value null for Gauge")
+			return
+		}
+		h.service.UpdateGauge(dto.ID, *dto.Value)
+	default:
+		c.String(http.StatusBadRequest, "Metric type not supported")
+	}
+}
+
+func (h Metrics) GetAllJsonHandler(c *gin.Context) {
+	all := h.service.GetAllMetrics()
+	dtos := make([]model.MetricsDto, 0, len(all))
+	for _, v := range all {
+		dtos = append(dtos, model.MetricsDto{
+			ID:    v.ID,
+			MType: v.ID,
+			Value: v.Value,
+			Delta: v.Delta,
+		})
+	}
+	if json, err := json.Marshal(dtos); err == nil {
+		c.Header("Content-Type", gin.MIMEJSON)
+		c.Writer.Write(json)
+	} else {
+		logger.Get().Error("Internal error encoding json", zap.Error(err))
+		c.String(http.StatusInternalServerError, err.Error())
 	}
 }
